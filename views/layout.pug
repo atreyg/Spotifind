@@ -2,6 +2,13 @@ doctype html
 html
   head
     title= title
-    link(rel='stylesheet', href='/stylesheets/style.css')
+    //References to leaflet.js style and script
+    link(rel="stylesheet" href="/stylesheets/leaflet.css")
+    script(src="/javascripts/leaflet.js")
+    
+    //References to custom styles and scripts
+    link(rel='stylesheet' href='/stylesheets/style.css')
+    script(src="/javascripts/map.js")
   body
-    block content
+    block pane
+    block map
