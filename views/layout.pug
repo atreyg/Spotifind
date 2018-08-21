@@ -1,13 +1,19 @@
 doctype html
 html
   head
-    title= title
+    title="Spotifind"
+
     //References to leaflet.js style and script
-    link(rel="stylesheet" href="/stylesheets/leaflet.css")
+    link(rel="stylesheet" href="stylesheets/leaflet.css")
     script(src="/javascripts/leaflet.js")
-    
-    //References to custom styles and scripts
-    link(rel='stylesheet' href='/stylesheets/style.css')
+
+    //References to semantic-ui
+    link(rel="stylesheet", href="/dist/semantic.min.css")
+    script(src="https://code.jquery.com/jquery-3.1.1.min.js")
+    script(src="/dist/semantic.min.js")
+
+    //References to local styles and scripts
+    link(rel='stylesheet', href='/stylesheets/style.css')
     script(src="/javascripts/map.js")
   body
     block pane

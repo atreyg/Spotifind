@@ -1,12 +1,12 @@
 extends layout
 
 block pane
-  div(id="pane")
-    h1= title
+  div(class="ui raised segment container" id="pane")
+    h1="Spotifind"
     p Welcome to #{title}
-    form(action="/" method="POST")
+    form(class="ui form" action="/" method="POST")
       input(type="text")
-      input(type="submit" value="submit")
+      input(class="ui button" type="submit" value="submit")
 
 block map
   div(id="map")
