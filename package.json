@@ -1,23 +1,21 @@
 {
   "name": "spotifind",
-  "version": "1.0.0",
-  "description": "CAB432 Mashup",
-  "main": "server.js",
+  "version": "0.0.0",
+  "private": true,
   "scripts": {
-    "test": "echo 'Error: no test specified'"
+    "start": "node ./bin/www",
+    "windev": "SET DEBUG=spotifind:* & nodemon ./bin/www",
+    "lindev": "DEBUG=spotifind:* nodemon ./bin/www"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/atreyg/Spotifind.git"
-  },
-  "author": "Atrey Gajjar",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/atreyg/Spotifind/issues"
-  },
-  "homepage": "https://github.com/atreyg/Spotifind#readme",
   "dependencies": {
-    "express": "^4.16.3"
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "express": "~4.16.0",
+    "http-errors": "~1.6.2",
+    "morgan": "~1.9.0",
+    "pug": "2.0.0-beta11"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "nodemon": "^1.18.3"
+  }
 }
