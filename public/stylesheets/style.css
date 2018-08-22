@@ -16,8 +16,7 @@ body {
 }
 
 #pane {
-    width: 200px;
-    background-color: beige;
     position: relative;
     z-index: 999;
+    width: 100%;
 }
