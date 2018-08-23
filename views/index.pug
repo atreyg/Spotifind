@@ -1,18 +1,22 @@
 extends layout
 
 mixin searchField(parameter)
-  var fieldId = parameter + "Search";
-  var shownLabel = parameter.toUpperCase();
-  label(for=fieldId)=shownLabel
-  input(id=fieldId type="text")
+  - let fieldId = parameter + "Search";
+  - let shownLabel = parameter.toUpperCase();
+  div(class="five wide field")
+    label(for=fieldId)=shownLabel
+    input(id=fieldId name=parameter type="text")
 
 block pane
   div(class="ui raised segment container" id="pane")
-    h1="Spotifind"
-    form(class="ui form" action="/" method="POST")
-      +searchField("artist")
-      +searchField("venue")
-      +searchField("location")
+    h1(class="ui center aligned header")="Spotifind"
+    form(class="ui form" onSubmit="formHandler(); return false;")
+      div(class="fields")
+        +searchField("artist")
+        +searchField("venue")
+        +searchField("area")
+        div(class="one wide field")
+            input(class="ui button" type="submit", value="Search!")
 
 block map
   div(id="map")
