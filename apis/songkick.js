@@ -18,18 +18,22 @@ const songkick = {
             json: true
         };
 
-        rp(options)
+        return rp(options)
             .then(resp => {
                 //Array with artist objects for all found
                 let artistsFound = resp.resultsPage.results.artist;
+
+                if (typeof artistsFound === "undefined") {
+                    throw new ArtistNotFoundException();
+                }
+
                 //Artist ids of found artists
                 let artistIds = artistsFound.map(entry => entry.id);
-                return artistIds;
-            })
-            .then(artistIds => {
+
                 /**
                  * !!Add support for multiple artists
                  */
+
                 options.uri =
                     baseUrl + `/artists/${artistIds[0]}/calendar.json`;
                 delete options.qs.query;
@@ -37,13 +41,44 @@ const songkick = {
             })
             .then(res => {
                 let eventsFound = res.resultsPage.results.event;
-                console.log(eventsFound);
-                return eventsFound[0];
-            })
-            .catch(err => {
-                console.log(err);
+
+                if (typeof eventsFound === "undefined") {
+                    throw new NoEventsException();
+                }
+
+                let filteredInformation = eventsFound
+                    .filter(event => {
+                        return (
+                            event.status === "ok" &&
+                            event.venue.lat &&
+                            event.venue.lng
+                        );
+                    })
+                    .map(event => {
+                        return {
+                            displayName: event.displayName,
+                            startDate: event.start.date, //yyyy-mm-dd
+                            startTime: event.start.time, //hh:mm:ss
+                            city: event.location.city,
+                            venue: event.venue.displayName,
+                            lat: event.venue.lat,
+                            lng: event.venue.lng
+                        };
+                    });
+
+                return filteredInformation;
             });
     }
 };
+
+function ArtistNotFoundException() {
+    this.message = "Could not find the artist searched for";
+    this.toString = () => this.message;
+}
+
+function NoEventsException() {
+    this.message = "The artist has no events coming up";
+    this.toString = () => this.message;
+}
 
 module.exports = songkick;

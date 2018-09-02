@@ -5,15 +5,23 @@ const songkick = require("../apis/songkick.js");
 
 /* GET home page. */
 router.get("/", (req, res, next) => {
-    res.render("index", { title: "Express", type: "get" });
+    res.render("index");
 });
 
 /* Handle search requests */
 router.post("/", (req, res, next) => {
-    //let { artist, venue, area } = req.body;
-    //songkick.searchArtist(artist);
     console.log("received post");
-    res.send(JSON.stringify({test: "return test val"}));
+    let { artist, venue, area } = req.body;
+
+    songkick
+        .searchArtist(artist)
+        .then(output => {
+            res.send(JSON.stringify(output));
+        })
+        .catch(e => {
+            //TODO Specific errors
+            res.send(e);
+        });
 });
 
 module.exports = router;

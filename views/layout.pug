@@ -4,8 +4,12 @@ html
     title="Spotifind"
 
     //References to leaflet.js style and script
-    link(rel="stylesheet" href="stylesheets/leaflet.css")
-    script(src="/javascripts/leaflet.js")
+    link(rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+    crossorigin="")
+    script(src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+    integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+    crossorigin="")
 
     //References to semantic-ui
     link(rel="stylesheet", href="/dist/semantic.min.css")
@@ -14,9 +18,9 @@ html
 
     //References to local styles and scripts
     link(rel='stylesheet', href='/stylesheets/style.css')
-    script(src="/javascripts/map.js")
+    script(src="/javascripts/mapUpdates.js")
     script(src="/javascripts/formHandler.js")
 
   body
     block pane
-    block map
+    block main
