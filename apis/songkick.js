@@ -37,6 +37,7 @@ const songkick = {
             })
             .then(res => {
                 let eventsFound = res.resultsPage.results.event;
+                console.log(eventsFound);
                 return eventsFound[0];
             })
             .catch(err => {

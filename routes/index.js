@@ -10,9 +10,10 @@ router.get("/", (req, res, next) => {
 
 /* Handle search requests */
 router.post("/", (req, res, next) => {
-    //res.render("index", { title: "Express", type: "post" });
-    let { artist, venue, area } = req.body;
-    res.json(songkick.searchArtist(artist));
+    //let { artist, venue, area } = req.body;
+    //songkick.searchArtist(artist);
+    console.log("received post");
+    res.send(JSON.stringify({test: "return test val"}));
 });
 
 module.exports = router;
