@@ -4,6 +4,24 @@ function formHandler() {
     let fromInput = document.getElementById("fromDate").value;
     let toInput = document.getElementById("toDate").value;
 
+    if(fromInput === ''){
+        let currentDate = new Date().toISOString();
+        fromInput = currentDate.substring(0, currentDate.indexOf("T"));
+    }
+
+    if(artistInput === '' && areaInput === ''){
+        let sidebar = document.getElementById('sidebar');
+        sidebar.innerHTML = "Please enter either an artist name or area! <br />" + sidebar.innerHTML;
+        
+        /**
+         * TODO : fix error ux design
+         */
+
+        document.getElementById('submitBtn').style.backgroundColor = "red";
+
+        return false;
+    }
+
     fetch("/", {
         method: "POST",
         headers: {

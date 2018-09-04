@@ -1,22 +1,41 @@
 const rp = require("request-promise");
 
-const baseUrl = "https://api.songkick.com/api/3.0";
 /**
  * TODO REFACTOR SO OPTIONS OBJECT IS CREATED FOR CALLS
  */
 const songkick = {
-    searchArtist: function(artistName) {
-        const options = {
-            uri: baseUrl + "/search/artists.json",
+
+    createRequestObj: function(values){
+        let { artist, area, from, to } = values;
+    
+        const baseUrl = "https://api.songkick.com/api/3.0";
+    
+        let options = {
+            uri: baseUrl + "/events.json",
             qs: {
                 apikey: "BuGhC5QiUFzro5h3",
-                query: artistName
             },
             headers: {
                 "User-Agent": "Request-Promise"
             },
             json: true
         };
+    
+        if(artist !== ''){
+            options.qs.artist_name = artist;
+        }
+        if(area !== ''){
+            options.qs.location = area;
+        }
+        if(to !== ''){
+            options.qs.max_date = to;
+        }
+        options.qs.min_date = from; 
+
+        return options;
+    },
+
+    searchArtist: function(artistName) {
 
         return rp(options)
             .then(resp => {
@@ -69,6 +88,13 @@ const songkick = {
 
                 return filteredInformation;
             });
+    },
+
+    search: function(options){
+        return rp(options)
+        .then(resp => {
+            console.log(resp);
+        })
     }
 };
 

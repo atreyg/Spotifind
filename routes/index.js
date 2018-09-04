@@ -11,10 +11,13 @@ router.get("/", (req, res, next) => {
 /* Handle search requests */
 router.post("/", (req, res, next) => {
     console.log("received post");
-    let { artist, area, from, to } = req.body;
+    
+    let options = songkick.createRequestObj(req.body); 
+
+    console.log(options);
 
     songkick
-        .searchArtist(artist)
+        .search(options)
         .then(output => {
             res.send(JSON.stringify(output));
         })
