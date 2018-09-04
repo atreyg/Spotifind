@@ -4,20 +4,26 @@ function formHandler() {
     let fromInput = document.getElementById("fromDate").value;
     let toInput = document.getElementById("toDate").value;
 
-    if(fromInput === ''){
+    if (fromInput === "") {
         let currentDate = new Date().toISOString();
         fromInput = currentDate.substring(0, currentDate.indexOf("T"));
     }
+    if (toInput === "") {
+        toInput =
+            parseInt(fromInput.substring(0, 4)) + 10 + fromInput.substring(4);
+    }
 
-    if(artistInput === '' && areaInput === ''){
-        let sidebar = document.getElementById('sidebar');
-        sidebar.innerHTML = "Please enter either an artist name or area! <br />" + sidebar.innerHTML;
-        
+    if (artistInput === "" && areaInput === "") {
+        let sidebar = document.getElementById("sidebar");
+        sidebar.innerHTML =
+            "Please enter either an artist name or area! <br />" +
+            sidebar.innerHTML;
+
         /**
          * TODO : fix error ux design
          */
 
-        document.getElementById('submitBtn').style.backgroundColor = "red";
+        document.getElementById("submitBtn").style.backgroundColor = "red";
 
         return false;
     }
@@ -36,6 +42,7 @@ function formHandler() {
     })
         .then(res => res.json())
         .then(res => {
+            console.log(res);
             mapHandler.addEvents(res);
             renderSidebarHTML(res);
         });

@@ -11,20 +11,36 @@ router.get("/", (req, res, next) => {
 /* Handle search requests */
 router.post("/", (req, res, next) => {
     console.log("received post");
-    
-    let options = songkick.createRequestObj(req.body); 
 
-    console.log(options);
+    let { artist, area, from, to } = req.body;
 
-    songkick
-        .search(options)
-        .then(output => {
-            res.send(JSON.stringify(output));
-        })
-        .catch(e => {
-            //TODO Specific errors
-            res.send(e);
+    /**
+     * TODO : questionable
+     */
+
+    if (artist !== "" && area !== "") {
+        songkick
+            .artistSearch(artist)
+            .then(res => {
+                artist = res;
+                return songkick.areaSearch(area);
+            })
+            .then(res => {
+                area = res;
+                return songkick.searchByBoth(artist, area, from, to);
+            });
+    } else if (area !== "") {
+        songkick.areaSearch(area).then(res => {
+            area = res;
+            return songkick.searchByArea(area, from, to);
         });
+    } else if (artist !== "") {
+        songkick.artistSearch(artist).then(res => {
+            artist = res;
+            console.log(artist);
+            return songkick.searchByArtist(artist, from, to);
+        });
+    }
 });
 
 module.exports = router;

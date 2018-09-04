@@ -4,99 +4,136 @@ const rp = require("request-promise");
  * TODO REFACTOR SO OPTIONS OBJECT IS CREATED FOR CALLS
  */
 const songkick = {
+    artistSearch: function(artistName) {
+        let req = createArtistObj(artistName);
 
-    createRequestObj: function(values){
-        let { artist, area, from, to } = values;
-    
-        const baseUrl = "https://api.songkick.com/api/3.0";
-    
-        let options = {
-            uri: baseUrl + "/events.json",
-            qs: {
-                apikey: "BuGhC5QiUFzro5h3",
-            },
-            headers: {
-                "User-Agent": "Request-Promise"
-            },
-            json: true
-        };
-    
-        if(artist !== ''){
-            options.qs.artist_name = artist;
-        }
-        if(area !== ''){
-            options.qs.location = area;
-        }
-        if(to !== ''){
-            options.qs.max_date = to;
-        }
-        options.qs.min_date = from; 
+        return rp(req).then(res => {
+            //Array with artist objects for all found
+            let artistsFound = res.resultsPage.results.artist;
 
-        return options;
+            if (typeof artistsFound === "undefined") {
+                throw new ArtistNotFoundException();
+            }
+
+            let artistNames = artistsFound.map(entry => entry.displayName);
+
+            return artistNames;
+        });
     },
 
-    searchArtist: function(artistName) {
+    areaSearch: function(areaName) {
+        let req = createAreaObj(areaName);
 
-        return rp(options)
-            .then(resp => {
-                //Array with artist objects for all found
-                let artistsFound = resp.resultsPage.results.artist;
+        return rp(req).then(res => {
+            let areasFound = res.resultsPage.results.location;
 
-                if (typeof artistsFound === "undefined") {
-                    throw new ArtistNotFoundException();
-                }
+            if (typeof areasFound === "undefined") {
+                throw new AreaNotFoundException();
+            }
 
-                //Artist ids of found artists
-                let artistNames = artistsFound.map(entry => entry.displayName);
+            let areaIds = areasFound.map(entry => entry.metroArea.id);
 
-                /**
-                 * !!Add support for multiple artists
-                 */
-
-                options.uri = baseUrl + `/events.json`;
-                delete options.qs.query;
-                options.qs.artist_name = artistNames[0];
-
-                return rp(options);
-            })
-            .then(res => {
-                let eventsFound = res.resultsPage.results.event;
-
-                if (typeof eventsFound === "undefined") {
-                    throw new NoEventsException();
-                }
-
-                let filteredInformation = eventsFound
-                    .filter(event => {
-                        return (
-                            event.status === "ok" &&
-                            event.venue.lat &&
-                            event.venue.lng
-                        );
-                    })
-                    .map(event => {
-                        return {
-                            displayName: event.displayName,
-                            startDate: event.start.date, //yyyy-mm-dd
-                            startTime: event.start.time, //hh:mm:ss
-                            city: event.location.city,
-                            venue: event.venue.displayName,
-                            lat: event.venue.lat,
-                            lng: event.venue.lng
-                        };
-                    });
-
-                return filteredInformation;
-            });
+            return areaIds;
+        });
     },
 
-    search: function(options){
-        return rp(options)
-        .then(resp => {
-            console.log(resp);
-        })
+    searchByArtist: function(artist, from, to) {
+        let req = createSearchObj(from, to);
+
+        for (let i = 0; i < artist.length; i++) {
+            req.qs.artist_name = artist[i];
+            search(req).then(res => console.log(res));
+        }
+    },
+
+    searchByArea: function(area, from, to) {
+        let req = createSearchObj(from, to);
+
+        for (let i = 0; i < area.length; i++) {
+            req.qs.location = "sk:" + area[i];
+            search(req).then(res => console.log(res));
+        }
+    },
+
+    searchByBoth: function(artist, area, from, to) {
+        let req = createSearchObj(from, to);
+
+        for (let i = 0; i < artist.length; i++) {
+            req.qs.artist_name = artist[i];
+
+            for (let j = 0; j < area.length; j++) {
+                req.qs.location = "sk:" + area[j];
+                search(req).then(res => console.log(res));
+            }
+        }
     }
 };
+
+function search(options) {
+    return rp(options).then(res => {
+        let eventsFound = res.resultsPage.results.event;
+
+        if (typeof eventsFound === "undefined") {
+            throw new NoEventsException();
+        }
+
+        let filteredInformation = eventsFound
+            .filter(event => {
+                return (
+                    event.status === "ok" && event.venue.lat && event.venue.lng
+                );
+            })
+            .map(event => {
+                return {
+                    displayName: event.displayName,
+                    startDate: event.start.date, //yyyy-mm-dd
+                    startTime: event.start.time, //hh:mm:ss
+                    city: event.location.city,
+                    venue: event.venue.displayName,
+                    lat: event.venue.lat,
+                    lng: event.venue.lng
+                };
+            });
+
+        return filteredInformation;
+    });
+}
+
+function createAreaObj(area) {
+    let options = createBaseOptionObj("/search/locations.json");
+    options.qs.query = area;
+
+    return options;
+}
+
+function createArtistObj(artist) {
+    let options = createBaseOptionObj("/search/artists.json");
+    options.qs.query = artist;
+
+    return options;
+}
+
+function createSearchObj(from, to) {
+    let options = createBaseOptionObj("/events.json");
+
+    options.qs.max_date = to;
+    options.qs.min_date = from;
+
+    return options;
+}
+
+function createBaseOptionObj(endpoint) {
+    return {
+        uri: "https://api.songkick.com/api/3.0" + endpoint,
+        qs: {
+            apikey: "BuGhC5QiUFzro5h3"
+        },
+        headers: {
+            "User-Agent": "Request-Promise"
+        },
+        json: true
+    };
+}
 
 function ArtistNotFoundException() {
     this.message = "Could not find the artist searched for";
@@ -104,7 +141,12 @@ function ArtistNotFoundException() {
 }
 
 function NoEventsException() {
-    this.message = "The artist has no events coming up";
+    this.message = "No events found for the search parameters";
+    this.toString = () => this.message;
+}
+
+function AreaNotFoundException() {
+    this.message = "Could not find the area searched for";
     this.toString = () => this.message;
 }
 
