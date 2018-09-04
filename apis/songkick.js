@@ -28,15 +28,16 @@ const songkick = {
                 }
 
                 //Artist ids of found artists
-                let artistIds = artistsFound.map(entry => entry.id);
+                let artistNames = artistsFound.map(entry => entry.displayName);
 
                 /**
                  * !!Add support for multiple artists
                  */
 
-                options.uri =
-                    baseUrl + `/artists/${artistIds[0]}/calendar.json`;
+                options.uri = baseUrl + `/events.json`;
                 delete options.qs.query;
+                options.qs.artist_name = artistNames[0];
+
                 return rp(options);
             })
             .then(res => {

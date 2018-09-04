@@ -1,7 +1,8 @@
 function formHandler() {
     let artistInput = document.getElementById("artistSearch").value;
-    let venueInput = document.getElementById("venueSearch").value;
     let areaInput = document.getElementById("areaSearch").value;
+    let fromInput = document.getElementById("fromDate").value;
+    let toInput = document.getElementById("toDate").value;
 
     fetch("/", {
         method: "POST",
@@ -10,8 +11,9 @@ function formHandler() {
         },
         body: JSON.stringify({
             artist: artistInput,
-            venue: venueInput,
-            area: areaInput
+            area: areaInput,
+            from: fromInput,
+            to: toInput
         })
     })
         .then(res => res.json())

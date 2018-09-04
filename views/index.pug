@@ -3,9 +3,10 @@ extends layout
 mixin searchField(parameter)
   - let fieldId = parameter + "Search";
   - let shownLabel = parameter.toUpperCase();
-  div(class="five wide field")
-    label(for=fieldId)=shownLabel
-    input(id=fieldId name=parameter type="text")
+  div(class="five wide inline field")
+      label(for=fieldId)=shownLabel
+      input(id=fieldId name=parameter class="thirteen wide field" type="text")
+      
 
 block pane
   div(class="ui raised segment container" id="pane")
@@ -13,12 +14,15 @@ block pane
     form(class="ui form" onSubmit="formHandler(); return false;")
       div(class="fields")
         +searchField("artist")
-        +searchField("venue")
         +searchField("area")
+        div(class="five wide inline field")
+          label(for="fromDate")='DATES'
+          input(id="fromDate" type="text" class="seven wide field")
+          input(id="toDate" type="text" class="seven wide field")
         div(class="one wide field")
             input(class="ui button" type="submit", value="Search!")
 
 block main
   div(class="ui grid" id="main")
-    div(id="map" class="thirteen wide column")
-    div(class="ui list three wide column" id="sidebar")
+    div(id="map" class="twelve wide column")
+    div(class="ui list four wide column" id="sidebar")

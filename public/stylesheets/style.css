@@ -15,14 +15,29 @@ body {
     height: 100%;
     margin-top: 0px;
     overflow-y: scroll;
+    direction: rtl;
 }
 
 #main {
-    height: 80%;
+    height: 79%;
 }
 
 #pane {
     position: relative;
     z-index: 999;
     width: 100%;
+}
+
+.item {
+    direction: ltr;
+}
+
+#fromDate {
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+#toDate {
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
 }

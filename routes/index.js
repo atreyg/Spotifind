@@ -11,7 +11,7 @@ router.get("/", (req, res, next) => {
 /* Handle search requests */
 router.post("/", (req, res, next) => {
     console.log("received post");
-    let { artist, venue, area } = req.body;
+    let { artist, area, from, to } = req.body;
 
     songkick
         .searchArtist(artist)
