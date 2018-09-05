@@ -42,10 +42,17 @@ function formHandler() {
     })
         .then(res => res.json())
         .then(res => {
-            console.log(res);
-            mapHandler.addEvents(res);
-            renderSidebarHTML(res);
+            if (typeof res.message !== "undefined") {
+                handleError(res);
+            } else {
+                mapHandler.addEvents(res);
+                renderSidebarHTML(res);
+            }
         });
+}
+
+function handleError(err) {
+    alert(err.message);
 }
 
 function renderSidebarHTML(events) {

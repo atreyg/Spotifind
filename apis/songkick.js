@@ -12,7 +12,7 @@ const songkick = {
             let artistsFound = res.resultsPage.results.artist;
 
             if (typeof artistsFound === "undefined") {
-                throw new ArtistNotFoundException();
+                throw new Exception("Could not find the artist searched for");
             }
 
             let artistNames = artistsFound.map(entry => entry.displayName);
@@ -28,7 +28,7 @@ const songkick = {
             let areasFound = res.resultsPage.results.location;
 
             if (typeof areasFound === "undefined") {
-                throw new AreaNotFoundException();
+                throw new Exception("Could not find the area searched for");
             }
 
             let areaIds = areasFound.map(entry => entry.metroArea.id);
@@ -39,33 +39,60 @@ const songkick = {
 
     searchByArtist: function(artist, from, to) {
         let req = createSearchObj(from, to);
+        let promiseChain = [];
+        let eventsFound = [];
 
         for (let i = 0; i < artist.length; i++) {
             req.qs.artist_name = artist[i];
-            search(req).then(res => console.log(res));
+            let promise = search(req).then(res => {
+                eventsFound = eventsFound.concat(res);
+            });
+            promiseChain.push(promise);
         }
+
+        return Promise.all(promiseChain).then(() => {
+            if (eventsFound.length === 0) {
+                throw new Exception("No events found for the artist");
+            }
+            return eventsFound;
+        });
     },
 
     searchByArea: function(area, from, to) {
         let req = createSearchObj(from, to);
+        let promiseChain = [];
+        let eventsFound = [];
 
         for (let i = 0; i < area.length; i++) {
             req.qs.location = "sk:" + area[i];
-            search(req).then(res => console.log(res));
+            let promise = search(req).then(res => {
+                eventsFound = eventsFound.concat(res);
+            });
+            promiseChain.push(promise);
         }
+
+        return Promise.all(promiseChain).then(() => {
+            if (eventsFound.length === 0) {
+                throw new Exception("No events found for the area");
+            }
+            return eventsFound;
+        });
     },
 
     searchByBoth: function(artist, area, from, to) {
-        let req = createSearchObj(from, to);
+        return this.searchByArtist(artist).then(res => {
+            let areaFiltered = res.filter(event => {
+                return area.includes(event.areaId);
+            });
 
-        for (let i = 0; i < artist.length; i++) {
-            req.qs.artist_name = artist[i];
-
-            for (let j = 0; j < area.length; j++) {
-                req.qs.location = "sk:" + area[j];
-                search(req).then(res => console.log(res));
+            if (areasFiltered.length === 0) {
+                throw new Exception(
+                    "No events found for the search parameters"
+                );
             }
-        }
+
+            return areaFiltered;
+        });
     }
 };
 
@@ -74,7 +101,8 @@ function search(options) {
         let eventsFound = res.resultsPage.results.event;
 
         if (typeof eventsFound === "undefined") {
-            throw new NoEventsException();
+            //throw new Exception("No events found for the search parameters");
+            return [];
         }
 
         let filteredInformation = eventsFound
@@ -90,6 +118,7 @@ function search(options) {
                     startTime: event.start.time, //hh:mm:ss
                     city: event.location.city,
                     venue: event.venue.displayName,
+                    areaId: event.venue.metroArea.id,
                     lat: event.venue.lat,
                     lng: event.venue.lng
                 };
@@ -135,18 +164,8 @@ function createBaseOptionObj(endpoint) {
     };
 }
 
-function ArtistNotFoundException() {
-    this.message = "Could not find the artist searched for";
-    this.toString = () => this.message;
-}
-
-function NoEventsException() {
-    this.message = "No events found for the search parameters";
-    this.toString = () => this.message;
-}
-
-function AreaNotFoundException() {
-    this.message = "Could not find the area searched for";
+function Exception(message) {
+    this.message = message;
     this.toString = () => this.message;
 }
 

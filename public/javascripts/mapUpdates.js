@@ -8,7 +8,6 @@ let mapHandler = {
             let marker = placeMarker(event.lat, event.lng);
             this.markerLayers.addLayer(marker);
         });
-        console.log("done");
     }
 };
 
@@ -37,6 +36,5 @@ function initMap() {
 }
 
 function placeMarker(lat, lng) {
-    console.log(lat + " " + lng);
     return L.marker([lat, lng]);
 }

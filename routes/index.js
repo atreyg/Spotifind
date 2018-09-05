@@ -9,7 +9,7 @@ router.get("/", (req, res, next) => {
 });
 
 /* Handle search requests */
-router.post("/", (req, res, next) => {
+router.post("/", (req, resp, next) => {
     console.log("received post");
 
     let { artist, area, from, to } = req.body;
@@ -17,7 +17,6 @@ router.post("/", (req, res, next) => {
     /**
      * TODO : questionable
      */
-
     if (artist !== "" && area !== "") {
         songkick
             .artistSearch(artist)
@@ -28,18 +27,21 @@ router.post("/", (req, res, next) => {
             .then(res => {
                 area = res;
                 return songkick.searchByBoth(artist, area, from, to);
-            });
+            })
+            .then(res => resp.send(res))
+            .catch(e => resp.send(e));
     } else if (area !== "") {
-        songkick.areaSearch(area).then(res => {
-            area = res;
-            return songkick.searchByArea(area, from, to);
-        });
+        songkick
+            .areaSearch(area)
+            .then(res => songkick.searchByArea(res, from, to))
+            .then(res => resp.send(res))
+            .catch(e => resp.send(e));
     } else if (artist !== "") {
-        songkick.artistSearch(artist).then(res => {
-            artist = res;
-            console.log(artist);
-            return songkick.searchByArtist(artist, from, to);
-        });
+        songkick
+            .artistSearch(artist)
+            .then(res => songkick.searchByArtist(res, from, to))
+            .then(res => resp.send(res))
+            .catch(e => resp.send(e));
     }
 });
 
