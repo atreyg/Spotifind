@@ -1,8 +1,9 @@
 function formHandler() {
-    let artistInput = document.getElementById("artistSearch").value;
-    let areaInput = document.getElementById("areaSearch").value;
+    let artistInput = document.getElementById("artistSearch").value.trim();
+    let areaInput = document.getElementById("areaSearch").value.trim();
     let fromInput = document.getElementById("fromDate").value;
     let toInput = document.getElementById("toDate").value;
+    let discoverInput = document.getElementById("similarArtists").checked;
 
     if (fromInput === "") {
         let currentDate = new Date().toISOString();
@@ -37,7 +38,8 @@ function formHandler() {
             artist: artistInput,
             area: areaInput,
             from: fromInput,
-            to: toInput
+            to: toInput,
+            discover: discoverInput
         })
     })
         .then(res => res.json())
@@ -60,9 +62,19 @@ function renderSidebarHTML(events) {
     events.forEach(event => {
         renderString += individualMenuItem(event);
     });
-    console.log("hi");
     document.getElementById("sidebar").innerHTML = renderString;
-    console.log(document.getElementById("sidebar"));
+
+    attachEvents();
+}
+
+function attachEvents() {
+    let items = document.getElementsByClassName("item");
+    items[0].setAttribute("id", "focused");
+    for (let i = 0; i < items.length; i++) {
+        items[i].addEventListener("click", function(e) {
+            setActiveEvent(i);
+        });
+    }
 }
 
 function individualMenuItem(event) {

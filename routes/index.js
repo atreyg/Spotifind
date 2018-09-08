@@ -12,7 +12,9 @@ router.get("/", (req, res, next) => {
 router.post("/", (req, resp, next) => {
     console.log("received post");
 
-    let { artist, area, from, to } = req.body;
+    let { artist, area, from, to, discover } = req.body;
+
+    console.log(discover);
 
     /**
      * TODO : questionable
@@ -28,7 +30,9 @@ router.post("/", (req, resp, next) => {
                 area = res;
                 return songkick.searchByBoth(artist, area, from, to);
             })
-            .then(res => resp.send(res))
+            .then(res => {
+                resp.send(res);
+            })
             .catch(e => resp.send(e));
     } else if (area !== "") {
         songkick

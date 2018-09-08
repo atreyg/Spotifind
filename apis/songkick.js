@@ -85,12 +85,11 @@ const songkick = {
                 return area.includes(event.areaId);
             });
 
-            if (areasFiltered.length === 0) {
+            if (areaFiltered.length === 0) {
                 throw new Exception(
                     "No events found for the search parameters"
                 );
             }
-
             return areaFiltered;
         });
     }

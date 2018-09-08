@@ -14,6 +14,9 @@ block pane
     form(class="ui form" onSubmit="formHandler(); return false;")
       div(class="fields")
         +searchField("artist")
+        div(class="ui slider checkbox")
+          input(name="similarArtists" id='similarArtists' type="checkbox")
+          label(for="similarArtists")='Discover'
         +searchField("area")
         div(class="five wide inline field")
           label(for="fromDate")='DATES'

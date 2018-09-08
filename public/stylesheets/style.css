@@ -32,6 +32,10 @@ body {
     direction: ltr;
 }
 
+.item#focused {
+    background-color: orange;
+}
+
 #fromDate {
     border-top-right-radius: 0px;
     border-bottom-right-radius: 0px;

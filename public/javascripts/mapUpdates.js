@@ -4,10 +4,16 @@ let mapHandler = {
     addEvents: function(events) {
         //Removes old markers
         this.markerLayers.clearLayers();
-        events.forEach(event => {
-            let marker = placeMarker(event.lat, event.lng);
+        console.log(events);
+        for (let i = 0; i < events.length; i++) {
+            let marker = placeMarker(
+                events[i].lat,
+                events[i].lng,
+                events[i].displayName,
+                i
+            );
             this.markerLayers.addLayer(marker);
-        });
+        }
     }
 };
 
@@ -33,8 +39,50 @@ function initMap() {
     mapHandler.mapObj.setMaxBounds([[-90, -200], [90, 200]]);
     mapHandler.markerLayers = new L.LayerGroup();
     mapHandler.markerLayers.addTo(mapHandler.mapObj);
+
+    //Creating markers
+    let defaultMarkerOptions = L.Icon.Default.prototype.options;
+    delete defaultMarkerOptions.iconRetinaUrl;
+    defaultMarkerOptions.shadowUrl = "../images/marker-shadow.png";
+
+    defaultMarkerOptions.iconUrl = "../images/marker-icon.png";
+    mapHandler.defaultIcon = L.icon(defaultMarkerOptions);
+
+    defaultMarkerOptions.iconUrl = "../images/marker-icon-active.png";
+    mapHandler.activeIcon = L.icon(defaultMarkerOptions);
 }
 
-function placeMarker(lat, lng) {
-    return L.marker([lat, lng]);
+function placeMarker(lat, lng, displayName, id) {
+    let marker = L.marker([lat, lng]).bindPopup(displayName);
+
+    if (id == 0) {
+        marker.setIcon(mapHandler.activeIcon);
+        mapHandler.activeMarker = marker;
+    } else {
+        marker.setIcon(mapHandler.defaultIcon);
+    }
+
+    marker.on("click", function(e) {
+        setActiveEvent(id, e.sourceTarget);
+    });
+
+    return marker;
+}
+
+function setActiveEvent(id, marker) {
+    if (typeof marker === "undefined") {
+        marker = mapHandler.markerLayers.getLayers()[id];
+    }
+
+    if (marker === mapHandler.activeMarker) {
+        return;
+    }
+
+    marker.openPopup();
+    marker.setIcon(mapHandler.activeIcon);
+    mapHandler.activeMarker.setIcon(mapHandler.defaultIcon);
+    mapHandler.activeMarker = marker;
+
+    document.getElementById("focused").removeAttribute("id");
+    document.getElementsByClassName("item")[id].setAttribute("id", "focused");
 }
