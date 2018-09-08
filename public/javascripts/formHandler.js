@@ -29,27 +29,28 @@ function formHandler() {
         return false;
     }
 
-    fetch("/", {
+    fetch("/search", {
         method: "POST",
         headers: {
             "Content-Type": "application/json; charset=utf-8"
         },
         body: JSON.stringify({
             artist: artistInput,
-            area: areaInput,
-            from: fromInput,
+            area: areaInput
+            /*            from: fromInput,
             to: toInput,
-            discover: discoverInput
+            discover: discoverInput*/
         })
     })
         .then(res => res.json())
         .then(res => {
-            if (typeof res.message !== "undefined") {
+            /*if (typeof res.message !== "undefined") {
                 handleError(res);
             } else {
                 mapHandler.addEvents(res);
                 renderSidebarHTML(res);
-            }
+            }*/
+            console.log(res);
         });
 }
 

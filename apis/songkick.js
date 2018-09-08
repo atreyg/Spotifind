@@ -150,6 +150,13 @@ function createSearchObj(from, to) {
     return options;
 }
 
+function createSimilarArtistsObj(artist) {
+    let options = createBaseOptionObj(
+        "/artists/" + artist + "/similar_artists.json"
+    );
+    return options;
+}
+
 function createBaseOptionObj(endpoint) {
     return {
         uri: "https://api.songkick.com/api/3.0" + endpoint,
