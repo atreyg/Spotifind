@@ -12,72 +12,126 @@ router.get("/", (req, res, next) => {
 /* Handle search requests */
 router.post("/search", (req, resp, next) => {
     let { artist, area } = req.body;
+    let promiseChain = [];
+    let result = { artists: null, areas: null };
 
-    let spotifyArtists = spotify.artistSearch(artist);
-    let songkickArtists = songkick.artistSearch(artist);
-    let mergedArtists = [];
+    if (artist !== "") {
+        promiseChain.push(spotify.artistSearch(artist));
+        promiseChain.push(songkick.artistSearch(artist));
+    }
 
-    Promise.all([spotifyArtists, songkickArtists]).then(res => {
-        let normalisedSongkick = res[1].map(element => {
-            return element.toLowerCase().replace(/[\W_]+/g, " ");
-        });
+    if (area !== "") {
+        promiseChain.push(songkick.areaSearch(area));
+    }
 
-        mergedArtists = res[0].filter(artist => {
-            let normalisedName = artist.name
-                .toLowerCase()
-                .replace(/[\W_]+/g, " ");
-            let index = normalisedSongkick.indexOf(normalisedName);
-
-            if (index === -1) {
-                return false;
-            } else {
-                artist.songkickName = res[1][index];
-                normalisedSongkick.splice(index, 1);
-                res[1].splice(index, 1);
-                return true;
+    Promise.all(promiseChain)
+        .then(res => {
+            if (res.length === 3) {
+                result.artists = findCommonArtists(res[0], res[1]);
+                result.areas = res[2];
+            } else if (res.length === 2) {
+                result.artists = findCommonArtists(res[0], res[1]);
+            } else if (res.length === 1) {
+                result.areas = res[0];
             }
-        });
 
-        console.log(mergedArtists);
-    });
+            if (result.artists !== null && result.artists.length === 0) {
+                throw new Error(
+                    "Could not find the artist searched for. Please check your search query."
+                );
+            }
+
+            if (result.areas !== null && result.areas.length === 0) {
+                throw new Error(
+                    "Could not find the area searched for. Please check your search query."
+                );
+            }
+
+            resp.send(result);
+        })
+        .catch(err => {
+            resp.send({ message: err.message });
+        });
 });
 
-router.post("/", (req, resp, next) => {
+router.post("/events", (req, resp, next) => {
     console.log("received post");
 
-    let { artist, area, from, to, discover } = req.body;
+    let { artist, area, from, to } = req.body;
+    let promiseAction;
 
-    /**
-     * TODO : questionable
-     */
-    if (artist !== "" && area !== "") {
-        songkick
-            .artistSearch(artist, discover)
-            .then(res => {
-                artist = res;
-                return songkick.areaSearch(area);
-            })
-            .then(res => {
-                area = res;
-                return songkick.searchByBoth(artist, area, from, to);
-            })
-            .then(res => {
-                resp.send(res);
-            })
-            .catch(e => resp.send(e));
-    } else if (area !== "") {
-        songkick
-            .areaSearch(area)
-            .then(res => songkick.searchByArea(res, from, to))
-            .then(res => resp.send(res))
-            .catch(e => resp.send(e));
-    } else if (artist !== "") {
-        songkick
-            .artistSearch(artist, discover)
-            .then(res => songkick.searchByArtist(res, from, to))
-            .then(res => resp.send(res))
-            .catch(e => resp.send(e));
+    if (artist !== null && area !== null) {
+        promiseAction = songkick.searchByBoth(artist, area, from, to);
+    } else if (area !== null) {
+        promiseAction = songkick.searchByArea(area, from, to);
+    } else if (artist !== null) {
+        promiseAction = songkick.searchByArtist(artist, from, to);
     }
+
+    let grouped;
+    promiseAction
+        .then(res => {
+            grouped = groupByArtists(res);
+            return findTracks(grouped);
+        })
+        .then(res => {
+            for (let i = 0; i < res.length; i++) {
+                let key = res[i][0].artist;
+                grouped[key].tracks = [];
+                for (let j = 0; j < res[i].length; j++) {
+                    grouped[key].tracks.push(res[i][j]);
+                }
+            }
+            resp.send(grouped);
+        })
+        .catch(e => resp.send({ message: e.message }));
 });
+
+function groupByArtists(res) {
+    let events = {};
+    for (let i = 0; i < res.length; i++) {
+        let artist = res[i].grouping;
+        if (!events[artist]) {
+            events[artist] = { events: [] };
+        }
+
+        events[artist].events.push(res[i]);
+    }
+    return events;
+}
+
+function findTracks(grouped) {
+    let promiseChain = [];
+    Object.keys(grouped).forEach(artist => {
+        promiseChain.push(
+            spotify.artistSearch(artist).then(res => {
+                return spotify.findSongs(res[0].id);
+            })
+        );
+    });
+
+    return Promise.all(promiseChain);
+}
+
+function findCommonArtists(spotifyFinds, songkickFinds) {
+    let normalisedSongkick = songkickFinds.map(element => {
+        return element.toLowerCase().replace(/[\W_]+/g, " ");
+    });
+
+    return spotifyFinds.filter(artist => {
+        let normalisedName = artist.name.toLowerCase().replace(/[\W_]+/g, " ");
+        let index = normalisedSongkick.indexOf(normalisedName);
+
+        if (index === -1) {
+            return false;
+        } else {
+            artist.songkickName = songkickFinds[index];
+            artist.state = "nosearch";
+            normalisedSongkick.splice(index, 1);
+            songkickFinds.splice(index, 1);
+            return true;
+        }
+    });
+}
 
 module.exports = router;

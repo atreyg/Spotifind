@@ -2,18 +2,25 @@ window.addEventListener("load", initMap, false);
 
 let mapHandler = {
     addEvents: function(events) {
-        //Removes old markers
-        this.markerLayers.clearLayers();
-        console.log(events);
-        for (let i = 0; i < events.length; i++) {
-            let marker = placeMarker(
-                events[i].lat,
-                events[i].lng,
-                events[i].displayName,
-                i
-            );
-            this.markerLayers.addLayer(marker);
+        this.clearMap();
+
+        let idTracker = 0;
+        for (let artistGroup in events) {
+            let artistEvents = events[artistGroup].events;
+            for (let i = 0; i < artistEvents.length; i++) {
+                let marker = placeMarker(
+                    artistEvents[i].lat,
+                    artistEvents[i].lng,
+                    artistEvents[i].displayName,
+                    idTracker
+                );
+                this.markerLayers.addLayer(marker);
+                idTracker++;
+            }
         }
+    },
+    clearMap: function() {
+        this.markerLayers.clearLayers();
     }
 };
 

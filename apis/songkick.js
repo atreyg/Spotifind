@@ -12,11 +12,10 @@ const songkick = {
             let artistsFound = res.resultsPage.results.artist;
 
             if (typeof artistsFound === "undefined") {
-                throw new Exception("Could not find the artist searched for");
+                return [];
             }
 
             let artistNames = artistsFound.map(entry => entry.displayName);
-
             return artistNames;
         });
     },
@@ -28,10 +27,25 @@ const songkick = {
             let areasFound = res.resultsPage.results.location;
 
             if (typeof areasFound === "undefined") {
-                throw new Exception("Could not find the area searched for");
+                return [];
             }
 
-            let areaIds = areasFound.map(entry => entry.metroArea.id);
+            let areaIds = areasFound.map(entry => {
+                let generalArea = entry.metroArea.displayName;
+
+                if (entry.metroArea.state) {
+                    generalArea += ", " + entry.metroArea.state.displayName;
+                }
+
+                generalArea += ", " + entry.metroArea.country.displayName;
+
+                return {
+                    id: entry.metroArea.id,
+                    city: entry.city.displayName,
+                    widerArea: generalArea,
+                    state: "nosearch"
+                };
+            });
 
             return areaIds;
         });
@@ -43,7 +57,7 @@ const songkick = {
         let eventsFound = [];
 
         for (let i = 0; i < artist.length; i++) {
-            req.qs.artist_name = artist[i];
+            req.qs.artist_name = artist[i].songkickName;
             let promise = search(req).then(res => {
                 eventsFound = eventsFound.concat(res);
             });
@@ -52,7 +66,7 @@ const songkick = {
 
         return Promise.all(promiseChain).then(() => {
             if (eventsFound.length === 0) {
-                throw new Exception("No events found for the artist");
+                throw new Error("No events found for the artist");
             }
             return eventsFound;
         });
@@ -64,7 +78,7 @@ const songkick = {
         let eventsFound = [];
 
         for (let i = 0; i < area.length; i++) {
-            req.qs.location = "sk:" + area[i];
+            req.qs.location = "sk:" + area[i].id;
             let promise = search(req).then(res => {
                 eventsFound = eventsFound.concat(res);
             });
@@ -73,22 +87,21 @@ const songkick = {
 
         return Promise.all(promiseChain).then(() => {
             if (eventsFound.length === 0) {
-                throw new Exception("No events found for the area");
+                throw new Error("No events found for the area");
             }
             return eventsFound;
         });
     },
 
     searchByBoth: function(artist, area, from, to) {
+        let areasForSearch = area.map(item => item.id);
         return this.searchByArtist(artist).then(res => {
             let areaFiltered = res.filter(event => {
-                return area.includes(event.areaId);
+                return areasForSearch.includes(event.areaId);
             });
 
             if (areaFiltered.length === 0) {
-                throw new Exception(
-                    "No events found for the search parameters"
-                );
+                throw new Error("No events found for the search parameters");
             }
             return areaFiltered;
         });
@@ -96,11 +109,18 @@ const songkick = {
 };
 
 function search(options) {
+    let artistGroup;
+
+    if (typeof options.qs.artist_name !== "undefined") {
+        artistGroup = options.qs.artist_name;
+    } else {
+        artistGroup = event.performance[0].displayName;
+    }
+
     return rp(options).then(res => {
         let eventsFound = res.resultsPage.results.event;
 
         if (typeof eventsFound === "undefined") {
-            //throw new Exception("No events found for the search parameters");
             return [];
         }
 
@@ -113,8 +133,9 @@ function search(options) {
             .map(event => {
                 return {
                     displayName: event.displayName,
+                    grouping: artistGroup,
                     startDate: event.start.date, //yyyy-mm-dd
-                    startTime: event.start.time, //hh:mm:ss
+                    //startTime: event.start.time, //hh:mm:ss
                     city: event.location.city,
                     venue: event.venue.displayName,
                     areaId: event.venue.metroArea.id,
@@ -168,11 +189,6 @@ function createBaseOptionObj(endpoint) {
         },
         json: true
     };
-}
-
-function Exception(message) {
-    this.message = message;
-    this.toString = () => this.message;
 }
 
 module.exports = songkick;

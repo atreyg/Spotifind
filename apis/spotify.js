@@ -53,6 +53,60 @@ const spotify = {
                 }
             }
         );
+    },
+
+    findSongs: function(artistId) {
+        let options = createBaseSpotify("/artists/" + artistId + "/top-tracks");
+        options.qs.market = "AU";
+
+        return rp(options).then(
+            res => {
+                if (res.tracks.length < 1) {
+                    return;
+                }
+
+                let limit = res.tracks.length > 1 ? 1 : res.tracks.length;
+                let tracks = [];
+                for (let i = 0; i < limit; i++) {
+                    tracks.push({
+                        name: res.tracks[i].name,
+                        artist: res.tracks[i].artists[0].name,
+                        preview_url: res.tracks[i].preview_url
+                    });
+                }
+                return tracks;
+            },
+            err => {
+                if (err.statusCode === 401) {
+                    return spotify.getAuthenticationToken().then(res => {
+                        spotify.token = res;
+                        return spotify.findSongs(artistId);
+                    });
+                } else {
+                    throw err;
+                }
+            }
+        );
+    },
+
+    similarArtists: function(artistId) {
+        let options = createBaseSpotify(
+            "/artists/" + artistId + "/related-artists"
+        );
+
+        return rp(options).then(
+            res => console.log(res),
+            err => {
+                if (err.statusCode === 401) {
+                    return spotify.getAuthenticationToken().then(res => {
+                        spotify.token = res;
+                        return spotify.similarArtists(artistId);
+                    });
+                } else {
+                    throw err;
+                }
+            }
+        );
     }
 };
 
