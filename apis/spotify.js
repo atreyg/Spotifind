@@ -82,7 +82,9 @@ const spotify = {
                         spotify.token = res;
                         return spotify.findSongs(artistId);
                     });
-                } else {
+                } else if(err.statusCode === 429){
+                    throw new Error('Too many results! Please make your query more specific');
+                }else {
                     throw err;
                 }
             }

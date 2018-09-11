@@ -76,15 +76,21 @@ router.post("/events", (req, resp, next) => {
         })
         .then(res => {
             for (let i = 0; i < res.length; i++) {
-                let key = res[i][0].artist;
-                grouped[key].tracks = [];
-                for (let j = 0; j < res[i].length; j++) {
-                    grouped[key].tracks.push(res[i][j]);
+
+                if(typeof res[i] !== 'undefined' && grouped.hasOwnProperty(res[i][0].artist)){
+                    let key = res[i][0].artist;
+                    grouped[key].tracks = [];
+                    for (let j = 0; j < res[i].length; j++) {
+                        grouped[key].tracks.push(res[i][j]);
+                    }
                 }
+
             }
             resp.send(grouped);
         })
-        .catch(e => resp.send({ message: e.message }));
+        .catch(e => {
+            resp.send({ message: e.message })
+        });
 });
 
 function groupByArtists(res) {
@@ -105,7 +111,11 @@ function findTracks(grouped) {
     Object.keys(grouped).forEach(artist => {
         promiseChain.push(
             spotify.artistSearch(artist).then(res => {
-                return spotify.findSongs(res[0].id);
+                if(res.length === 0){
+                    return;
+                }else{
+                    return spotify.findSongs(res[0].id);
+                }
             })
         );
     });

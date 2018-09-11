@@ -58,7 +58,7 @@ const songkick = {
 
         for (let i = 0; i < artist.length; i++) {
             req.qs.artist_name = artist[i].songkickName;
-            let promise = search(req).then(res => {
+            let promise = search(req, artist[i].songkickName).then(res => {
                 eventsFound = eventsFound.concat(res);
             });
             promiseChain.push(promise);
@@ -108,17 +108,10 @@ const songkick = {
     }
 };
 
-function search(options) {
-    let artistGroup;
+function search(options, grouping) {
 
-    if (typeof options.qs.artist_name !== "undefined") {
-        artistGroup = options.qs.artist_name;
-    } else {
-        artistGroup = event.performance[0].displayName;
-    }
-
-    return rp(options).then(res => {
-        let eventsFound = res.resultsPage.results.event;
+    return Promise.all([rp(options), Promise.resolve(grouping)]).then(res => {
+        let eventsFound = res[0].resultsPage.results.event;
 
         if (typeof eventsFound === "undefined") {
             return [];
@@ -131,6 +124,13 @@ function search(options) {
                 );
             })
             .map(event => {
+                let artistGroup;
+                if (typeof res[1] !== "undefined") {
+                    artistGroup = res[1];
+                } else {
+                    artistGroup = event.performance[0].displayName;
+                }
+
                 return {
                     displayName: event.displayName,
                     grouping: artistGroup,

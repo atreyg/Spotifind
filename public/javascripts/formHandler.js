@@ -262,13 +262,13 @@ function handleError(err) {
 }
 
 function renderSidebarHTML(input) {
-    console.log(input);
     let renderString = "";
     for (let artistGroup in input) {
         let artistEvents = input[artistGroup].events;
         renderString +=
             "<h3 class='ui header'>" + artistEvents[0].grouping + "</h3>";
-        if (input[artistGroup].tracks[0].preview_url !== null) {
+        console.log(input[artistGroup])
+        if (typeof input[artistGroup].tracks !== 'undefined' && input[artistGroup].tracks[0].preview_url !== null) {
             renderString +=
                 "<span class='musicPlayer'><audio controls><source src='" +
                 input[artistGroup].tracks[0].preview_url +
@@ -278,7 +278,7 @@ function renderSidebarHTML(input) {
             renderString += individualMenuItem(event);
         });
     }
-
+    
     document.getElementById("sidebar").innerHTML = renderString;
 
     attachEvents();
