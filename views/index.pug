@@ -20,7 +20,7 @@ block pane
           input(id="fromDate" type="text" class="six wide field")
           input(id="toDate" type="text" class="six wide field")
         div(class="one wide field")
-            input(class="ui button" id="submitBtn" type="submit", value="Search!")
+            button(class="ui primary button" id="submitBtn" type="submit")="SEARCH"
 
 block main
   div(class="ui grid" id="main")
@@ -28,4 +28,10 @@ block main
     div(class="ui list four wide column" id="sidebar")
 
 block search
-  div(id="searchContainer" class='ui raised container segment')
+  div(id="overlay")
+    div(id="searchContainer" class='ui raised container segment')
+      h2(class="ui left floated header")="Search results:"
+      button(id="closeBtn" class="circular ui right floated icon red button")
+        i(class="close icon")
+      div(id="subSearchContainer")
+      button(id="findEventsBtn" class="ui primary button")="Find Events"

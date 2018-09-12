@@ -1,40 +1,48 @@
 function formHandler() {
     let artistInput = document.getElementById("artistSearch").value.trim();
     let areaInput = document.getElementById("areaSearch").value.trim();
-
-    if (artistInput === "" && areaInput === "") {
-        let sidebar = document.getElementById("sidebar");
-        sidebar.innerHTML =
-            "Please enter either an artist name or area! <br />" +
-            sidebar.innerHTML;
-
-        /**
-         * TODO : fix error ux design
-         */
-
-        document.getElementById("submitBtn").style.backgroundColor = "red";
-
+    let submitBtn = document.getElementById('submitBtn');
+    
+    if(!hasMinimumInput(artistInput, areaInput, submitBtn)){
         return false;
     }
-
-    fetch("/search", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        },
-        body: JSON.stringify({
-            artist: artistInput,
-            area: areaInput
-        })
-    })
-        .then(res => res.json())
-        .then(res => {
+    
+    startButtonLoading(submitBtn);
+    
+    fetchHandler("/search", {
+        artist: artistInput,
+        area: areaInput
+    }).then(res => {
+            stopButtonLoading(submitBtn);
             if (typeof res.message !== "undefined") {
                 handleError(res);
             } else {
                 renderSearchSelection(res);
             }
         });
+}
+
+function fetchHandler(endpoint, bodyObject){
+    return fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify(bodyObject)
+    }).then(res => res.json());
+}
+
+function hasMinimumInput(artistInput, areaInput, submitBtn){
+
+    if (artistInput === "" && areaInput === "") {
+        submitBtn.classList.add("shaker");
+        submitBtn.classList.replace("primary", "red");
+        
+        alert("Please enter an artist or area to search for.")
+        return false;
+    }
+
+    return true
 }
 
 function renderSearchSelection(searchResults) {
@@ -70,18 +78,22 @@ function renderSearchSelection(searchResults) {
         renderString += areaString + "</div>";
     }
 
-    let searchContainer = document.getElementById("searchContainer");
-    searchContainer.setAttribute("style", "visibility: visible");
+    document.getElementById("overlay").setAttribute("style", "visibility: visible");
+    let searchContainer = document.getElementById("subSearchContainer");
     searchContainer.innerHTML = renderString;
-    searchContainer.innerHTML +=
-        "<a><button id='findEventsBtn' class='ui button'>Find Events</button></a>";
 
+    attachButtonEvents(searchResults);
+    attachCardEvents(searchResults);
+}
+
+function attachButtonEvents(searchResults){
     document
         .getElementById("findEventsBtn")
         .addEventListener("click", function() {
             searchEvents(searchResults);
         });
-    attachCardEvents(searchResults);
+    
+    document.getElementById("closeBtn").addEventListener("click", closeSearchWindow);
 }
 
 function searchEvents(results) {
@@ -109,19 +121,17 @@ function searchEvents(results) {
     }
 
     makeEventSearchCall(artists, areas);
-    closeSearchWindow();
 }
 
 function closeSearchWindow() {
-    let searchContainer = document.getElementById("searchContainer");
-    searchContainer.setAttribute("style", "visibility: hidden");
-    searchContainer.innerHTML = "";
+    document.getElementById("overlay").setAttribute("style", "visibility: hidden");
+    document.getElementById("subSearchContainer").innerHTML = "";
 }
 
-function makeEventSearchCall(artists, areas) {
+function getDateValues(){
     let fromInput = document.getElementById("fromDate").value;
     let toInput = document.getElementById("toDate").value;
-
+    
     if (fromInput === "") {
         let currentDate = new Date().toISOString();
         fromInput = currentDate.substring(0, currentDate.indexOf("T"));
@@ -131,30 +141,35 @@ function makeEventSearchCall(artists, areas) {
             parseInt(fromInput.substring(0, 4)) + 10 + fromInput.substring(4);
     }
 
-    mapHandler.clearMap();
-    clearSideBar();
+    return [fromInput, toInput];
+}
 
-    fetch("/events", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        },
-        body: JSON.stringify({
-            artist: artists,
-            area: areas,
-            from: fromInput,
-            to: toInput
-        })
+function makeEventSearchCall(artists, areas) {
+
+    let dates = getDateValues();
+    let findEventsBtn = document.getElementById('findEventsBtn');
+    startButtonLoading(findEventsBtn);
+
+
+    fetchHandler("/events", {
+        artist: artists,
+        area: areas,
+        from: dates[0],
+        to: dates[1]
     })
-        .then(res => res.json())
-        .then(res => {
-            if (typeof res.message !== "undefined") {
-                handleError(res);
-            } else {
-                mapHandler.addEvents(res);
-                renderSidebarHTML(res);
-            }
-        });
+    .then(res => {
+        mapHandler.clearMap();
+        clearSideBar();
+        //Stops button loading when search is cleared
+        closeSearchWindow();
+
+        if (typeof res.message !== "undefined") {
+            handleError(res);
+        } else {
+            mapHandler.addEvents(res);
+            renderSidebarHTML(res);
+        }
+    });
 }
 
 function createAreaResultDiv(result) {
@@ -206,13 +221,7 @@ function attachCardEvents(searchResults) {
 }
 
 function toggleCardState(card, resultData) {
-    let states;
-
-    if (resultData.hasOwnProperty("city")) {
-        states = ["nosearch", "search"];
-    } else {
-        states = ["nosearch", "search", "similar"];
-    }
+    let states = ["nosearch", "search"];
 
     let currentState = states.indexOf(resultData.state);
     currentState = (currentState + 1) % states.length;
@@ -225,13 +234,8 @@ function toggleCardState(card, resultData) {
     let icons = card.getElementsByTagName("i");
     if (resultData.state === "nosearch") {
         icons[0].className = "toggle off icon";
-        if (icons[1]) {
-            icons[1].className = "toggle off icon";
-        }
     } else if (resultData.state === "search") {
         icons[0].className = "toggle on icon";
-    } else if (resultData.state === "similar") {
-        icons[1].className = "toggle on icon";
     }
 }
 
@@ -249,10 +253,6 @@ function createArtistResultDiv(result) {
                 <i class="toggle off icon"></i>
                 Search
             </span>
-            <span class="right floated toggle">
-                <i class="toggle off icon"></i>
-                Discovery
-            </span>
         </div>
     </div>`;
 }
@@ -267,10 +267,9 @@ function renderSidebarHTML(input) {
         let artistEvents = input[artistGroup].events;
         renderString +=
             "<h3 class='ui header'>" + artistEvents[0].grouping + "</h3>";
-        console.log(input[artistGroup])
         if (typeof input[artistGroup].tracks !== 'undefined' && input[artistGroup].tracks[0].preview_url !== null) {
             renderString +=
-                "<span class='musicPlayer'><audio controls><source src='" +
+                "<span><audio controls><source src='" +
                 input[artistGroup].tracks[0].preview_url +
                 "' type='audio/mpeg'</audio></span>";
         }
@@ -280,7 +279,6 @@ function renderSidebarHTML(input) {
     }
     
     document.getElementById("sidebar").innerHTML = renderString;
-
     attachEvents();
 }
 
@@ -313,4 +311,12 @@ function individualMenuItem(event) {
     </div>`;
 
     return singleRender;
+}
+
+function startButtonLoading(button){
+    button.className = "ui primary loading button";
+}
+
+function stopButtonLoading(button){
+    button.className = "ui primary button";
 }

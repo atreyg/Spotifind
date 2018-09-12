@@ -16,6 +16,15 @@ body {
     margin-top: 0px;
     overflow-y: scroll;
     padding-right: 25px;
+    direction: rtl;
+}
+
+#sidebar>*, audio{
+    direction: ltr;
+}
+
+.item>.content{
+    padding: 7px;
 }
 
 #main {
@@ -26,11 +35,6 @@ body {
     position: relative;
     z-index: 999;
     width: 100%;
-}
-
-.item {
-    direction: ltr;
-    padding: 10px;
 }
 
 .item#focused {
@@ -48,15 +52,22 @@ body {
 }
 
 #searchContainer {
-    z-index: 9999;
     background-color: white;
     width: 70%;
     height: 80%;
-    position: absolute;
+    position: relative;
     top: 10%;
-    left: 15%;
-    overflow: scroll;
-    visibility: hidden;
+}
+
+#subSearchContainer{
+    height: 75%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    clear:both;
+}
+
+.content{
+    overflow: hidden;
 }
 
 .content.nosearch {
@@ -67,13 +78,42 @@ body {
     background-color: rgb(198, 233, 245) !important;
 }
 
-.content.similar {
-    background-color: rgb(124, 215, 245) !important;
+#findEventsBtn {
+    display: block;
+    margin: 30px auto 20px auto; 
+    width: 90%;
 }
 
-#findEventsBtn {
-    margin-top: 10px;
-    margin-left: auto;
-    margin-right: auto;
-    width: 50%;
+#overlay{
+    z-index: 9999;
+    width:100%;
+    height:100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: rgba(128, 128, 128, 0.596);
+    visibility: hidden;
 }
+
+.shaker{
+    animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+}
+
+@keyframes shake {
+    10%, 90% {
+      transform: translate3d(-1px, 0, 0);
+    }
+    
+    20%, 80% {
+      transform: translate3d(2px, 0, 0);
+    }
+  
+    30%, 50%, 70% {
+      transform: translate3d(-4px, 0, 0);
+    }
+  
+    40%, 60% {
+      transform: translate3d(4px, 0, 0);
+    }
+  }
