@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 function formHandler() {
     let artistInput = document.getElementById("artistSearch").value.trim();
     let areaInput = document.getElementById("areaSearch").value.trim();
@@ -6,6 +9,9 @@ function formHandler() {
     if(!hasMinimumInput(artistInput, areaInput, submitBtn)){
         return false;
     }
+    
+    //Setup close button event
+    document.getElementById("closeBtn").addEventListener("click", closeSearchWindow);
     
     startButtonLoading(submitBtn);
     
@@ -52,8 +58,8 @@ function renderSearchSelection(searchResults) {
         let artistString = "";
         let num = searchResults.artists.length;
         artistString += `<h1 class='ui header'> ${num} artist(s) found that match search </h1>
-            <h3 class='ui header'>Select who to search for below. Toggle through the states of:
-            'search', 'discovery', and 'don't search' by clicking on the artist cards.
+            <h3 class='ui header'>Select who to search for below. Toggle whether to search
+            an artist by clicking on the card.
             </h3><div class='ui link cards'>`;
 
         for (let i = 0; i < num; i++) {
@@ -67,8 +73,8 @@ function renderSearchSelection(searchResults) {
         let areaString = "";
         let num = searchResults.areas.length;
         areaString += `<h1 class='ui header'> ${num} area(s) found that match search </h1>
-            <h3 class='ui header'>Select where to search below. Toggle through the states of:
-            'search' and 'don't search' by clicking on the area cards.
+            <h3 class='ui header'>Select where to search below. Toggle whether to search
+            an area by clicking on the card.
             </h3><div class='ui link cards'>`;
 
         for (let i = 0; i < num; i++) {
@@ -80,47 +86,48 @@ function renderSearchSelection(searchResults) {
 
     document.getElementById("overlay").setAttribute("style", "visibility: visible");
     let searchContainer = document.getElementById("subSearchContainer");
+
     searchContainer.innerHTML = renderString;
 
-    attachButtonEvents(searchResults);
+    updateSearchEventButton(searchResults);
     attachCardEvents(searchResults);
 }
 
-function attachButtonEvents(searchResults){
-    document
-        .getElementById("findEventsBtn")
-        .addEventListener("click", function() {
-            searchEvents(searchResults);
-        });
-    
-    document.getElementById("closeBtn").addEventListener("click", closeSearchWindow);
+function updateSearchEventButton(searchResults){
+    let findEventsBtn = document.getElementById("findEventsBtn");
+    //let clone = findEventsBtn.cloneNode(true);
+
+    //findEventsBtn.parentNode.replaceChild(clone, findEventsBtn);
+
+    findEventsBtn.addEventListener("click", function (e) {
+        searchEvents(searchResults);
+    });
 }
 
 function searchEvents(results) {
-    let areas = null;
-    let artists = null;
+    
+    let areas = findSelectedItems("areas", results);
+    let artists = findSelectedItems("artists", results);
 
-    if (results.areas !== null) {
-        areas = results.areas.filter(area => area.state !== "nosearch");
-        if (areas.length === 0) {
-            alert(
-                "Please select an area, or remove any input from the field and query again"
-            );
-            return;
-        }
-    }
-
-    if (results.artists !== null) {
-        artists = results.artists.filter(artist => artist.state !== "nosearch");
-        if (artists.length === 0) {
-            alert(
-                "Please select an artist, or remove any input from the field and query again"
-            );
-            return;
-        }
+    if(areas === -1 || artists === -1){
+        return;
     }
 
     makeEventSearchCall(artists, areas);
+}
+
+function findSelectedItems(itemType, results){
+    let filtered = null;
+    if (results[itemType] !== null) {
+        filtered = results[itemType].filter(item => item.state === "search");
+        if (filtered.length === 0) {
+            alert(
+                "Please select " + itemType + " or remove any input from the field and query again"
+            );
+            return -1;
+        }
+    }
+    return filtered;
 }
 
 function closeSearchWindow() {
@@ -160,7 +167,7 @@ function makeEventSearchCall(artists, areas) {
     .then(res => {
         mapHandler.clearMap();
         clearSideBar();
-        //Stops button loading when search is cleared
+        stopButtonLoading(findEventsBtn);
         closeSearchWindow();
 
         if (typeof res.message !== "undefined") {

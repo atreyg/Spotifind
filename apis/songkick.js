@@ -66,6 +66,7 @@ const songkick = {
 
         return Promise.all(promiseChain).then(() => {
             if (eventsFound.length === 0) {
+                console.log('lasjd')
                 throw new Error("No events found for the artist");
             }
             return eventsFound;
@@ -132,6 +133,7 @@ function search(options, grouping) {
                 }
 
                 return {
+                    id: event.id,
                     displayName: event.displayName,
                     grouping: artistGroup,
                     startDate: event.start.date, //yyyy-mm-dd
