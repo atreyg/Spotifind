@@ -147,6 +147,7 @@ function trackSearches(res, artistArray) {
             let index = names.indexOf(artistArray[i]);
             if (index === -1) {
                 secondaryChain.push(Promise.resolve(-1));
+                continue;
             }
             //If artist is found, search for their top tracks
             let options = createBaseSpotify(

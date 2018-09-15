@@ -67,14 +67,18 @@ router.post("/events", (req, resp, next) => {
     let { artist, area, from, to } = req.body;
 
     //Determine whether search has artists on discovery setting
-    let discoveryFor = artist.filter(single => single.state === "discover");
+    let discoveryFor = [];
     let discoveryPromise = [];
+
+    if (artist) {
+        discoveryFor = artist.filter(single => single.state === "discover");
+    }
 
     //Build promise array based on if new artists have to be discovered
     if (discoveryFor.length === 0) {
         discoveryPromise.push(Promise.resolve(1));
     } else {
-        artist.forEach(element => {
+        discoveryFor.forEach(element => {
             discoveryPromise.push(spotify.similarArtists(element.id));
         });
     }
