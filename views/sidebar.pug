@@ -1,0 +1,24 @@
+mixin eventBlock(event)
+  - 
+     let d = event.startDate
+        .split("-")
+        .reverse()
+        .join("/");
+
+  div(class='item')
+    div(class='content')
+      div(class='header')=event.displayName
+      div(class='meta')=event.venue + " - " + d
+      div(class='meta')
+        span=event.city
+        a(href=event.uri target='_blank')="More info..."
+
+each data, artist in groupings
+  h3(class='ui header')=artist
+  if data.tracks && data.tracks.preview_url
+    div="Preview: " + data.tracks.name
+    div
+      audio(controls)
+        source(src=data.tracks.preview_url type="audio/mpeg")
+  each event in data.events
+    +eventBlock(event)

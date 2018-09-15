@@ -9,6 +9,7 @@ const pug = require("pug");
 
 //Pug template for the initial search results
 const compiledSearchHTML = pug.compileFile("./views/searchResults.pug");
+const compiledEventHTML = pug.compileFile("./views/sidebar.pug");
 
 //Render index.pug on intial page load
 router.get("/", (req, res, next) => {
@@ -26,7 +27,6 @@ router.post("/search", (req, resp, next) => {
         promiseChain.push(spotify.artistSearch(artist));
         promiseChain.push(songkick.artistSearch(artist));
     }
-
     if (area !== "") {
         promiseChain.push(songkick.areaSearch(area));
     }
@@ -66,41 +66,67 @@ router.post("/events", (req, resp, next) => {
     //Deconstruct request object to variables
     let { artist, area, from, to } = req.body;
 
-    //Search for events based on the combination of inputs provided from the search window
-    let promiseAction;
-    if (artist !== null && area !== null) {
-        promiseAction = songkick.searchByBoth(artist, area, from, to);
-    } else if (area !== null) {
-        promiseAction = songkick.searchByArea(area, from, to);
-    } else if (artist !== null) {
-        promiseAction = songkick.searchByArtist(artist, from, to);
+    //Determine whether search has artists on discovery setting
+    let discoveryFor = artist.filter(single => single.state === "discover");
+    let discoveryPromise = [];
+
+    //Build promise array based on if new artists have to be discovered
+    if (discoveryFor.length === 0) {
+        discoveryPromise.push(Promise.resolve(1));
+    } else {
+        artist.forEach(element => {
+            discoveryPromise.push(spotify.similarArtists(element.id));
+        });
     }
 
-    let grouped;
-    promiseAction
-        .then(res => {
-            let uniqueResults = removeDuplicateEvents(res);
-            grouped = groupByArtists(uniqueResults);
-            return findTracks(grouped);
-        })
-        .then(res => {
+    //Resolve promise to do with searching for new artist, if none selected will resolve to 1
+    Promise.all(discoveryPromise).then(res => {
+        if (res[0] !== 1) {
+            //Add similar artists to 'search' array to continue on program flow like normal
             for (let i = 0; i < res.length; i++) {
-                if (
-                    typeof res[i] !== "undefined" &&
-                    grouped.hasOwnProperty(res[i][0].artist)
-                ) {
-                    let key = res[i][0].artist;
-                    grouped[key].tracks = [];
-                    for (let j = 0; j < res[i].length; j++) {
-                        grouped[key].tracks.push(res[i][j]);
-                    }
-                }
+                res[i].forEach(similar => {
+                    artist.push({ songkickName: similar });
+                });
             }
-            resp.send(grouped);
-        })
-        .catch(e => {
-            resp.send({ message: e.message });
-        });
+        }
+
+        //Search for events based on the combination of inputs provided from the search window
+        let promiseAction;
+        if (artist !== null && area !== null) {
+            promiseAction = songkick.searchByBoth(artist, area, from, to);
+        } else if (area !== null) {
+            promiseAction = songkick.searchByArea(area, from, to);
+        } else if (artist !== null) {
+            promiseAction = songkick.searchByArtist(artist, from, to);
+        }
+
+        let grouped;
+        //Waiting till all results are back
+        promiseAction
+            .then(res => {
+                let uniqueResults = removeDuplicateEvents(res);
+                grouped = groupByArtists(uniqueResults);
+                //Find top track of artist
+                return spotify.findTracks(Object.keys(grouped));
+            })
+            .then(res => {
+                //If the top track was found, add it to the artist object in grouped
+                let artistArray = Object.keys(grouped);
+                for (let i = 0; i < res.length; i++) {
+                    if (res[i] === -1) {
+                        continue;
+                    }
+                    grouped[artistArray[i]].tracks = res[i];
+                }
+
+                //Store HTML string for event list in the object to send back
+                grouped.html = compiledEventHTML({ groupings: grouped });
+                resp.send(grouped);
+            })
+            .catch(e => {
+                resp.send({ message: e.message });
+            });
+    });
 });
 
 /**
@@ -144,6 +170,7 @@ function groupByArtists(res) {
  * If an artist is not found on both platforms, they are excluded from results.
  * @param {array} spotifyFinds search results
  * @param {array} songkickFinds
+ * @returns {array} artists that can be found on Songkick and Spotify
  */
 function findCommonArtists(spotifyFinds, songkickFinds) {
     //Standard for artist names that are stylised differently on the services
@@ -174,6 +201,7 @@ function findCommonArtists(spotifyFinds, songkickFinds) {
  * Check whether a searched field could not
  * @param {object} result Object with results found from searches.
  * @param {string} key String representation of the key that is being checked for.
+ * @throws Error if a field is searched for but not found.
  */
 function checkNotFound(result, key) {
     if (result[key] !== null && result[key].length === 0) {
@@ -183,23 +211,6 @@ function checkNotFound(result, key) {
                 " searched for. Please check your search query."
         );
     }
-}
-
-function findTracks(grouped) {
-    let promiseChain = [];
-    Object.keys(grouped).forEach(artist => {
-        promiseChain.push(
-            spotify.artistSearch(artist).then(res => {
-                if (res.length === 0) {
-                    return;
-                } else {
-                    return spotify.findSongs(res[0].id);
-                }
-            })
-        );
-    });
-
-    return Promise.all(promiseChain);
 }
 
 module.exports = router;

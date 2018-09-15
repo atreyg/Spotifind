@@ -36,16 +36,6 @@ function formHandler() {
     });
 }
 
-function fetchHandler(endpoint, bodyObject) {
-    return fetch(endpoint, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        },
-        body: JSON.stringify(bodyObject)
-    }).then(res => res.json());
-}
-
 function hasMinimumInput(artistInput, areaInput, submitBtn) {
     if (artistInput === "" && areaInput === "") {
         submitBtn.classList.add("shaker");
@@ -65,6 +55,13 @@ function renderSearchSelection(searchHTML) {
     let searchContainer = document.getElementById("subSearchContainer");
 
     searchContainer.innerHTML = searchHTML;
+}
+
+function closeSearchWindow() {
+    document
+        .getElementById("overlay")
+        .setAttribute("style", "visibility: hidden");
+    document.getElementById("subSearchContainer").innerHTML = "";
 }
 
 function updateSearchEventButton(searchResults) {
@@ -89,46 +86,6 @@ function searchEvents(results) {
     makeEventSearchCall(artists, areas);
 }
 
-function findSelectedItems(itemType, results) {
-    let filtered = null;
-
-    if (results[itemType] !== null) {
-        filtered = results[itemType].filter(item => item.state === "search");
-        if (filtered.length === 0) {
-            alert(
-                "Please select " +
-                    itemType +
-                    " or remove any input from the field and query again"
-            );
-            return -1;
-        }
-    }
-    return filtered;
-}
-
-function closeSearchWindow() {
-    document
-        .getElementById("overlay")
-        .setAttribute("style", "visibility: hidden");
-    document.getElementById("subSearchContainer").innerHTML = "";
-}
-
-function getDateValues() {
-    let fromInput = document.getElementById("fromDate").value;
-    let toInput = document.getElementById("toDate").value;
-
-    if (fromInput === "") {
-        let currentDate = new Date().toISOString();
-        fromInput = currentDate.substring(0, currentDate.indexOf("T"));
-    }
-    if (toInput === "") {
-        toInput =
-            parseInt(fromInput.substring(0, 4)) + 10 + fromInput.substring(4);
-    }
-
-    return [fromInput, toInput];
-}
-
 function makeEventSearchCall(artists, areas) {
     let dates = getDateValues();
     let findEventsBtn = document.getElementById("findEventsBtn");
@@ -148,10 +105,44 @@ function makeEventSearchCall(artists, areas) {
         if (typeof res.message !== "undefined") {
             handleError(res);
         } else {
+            renderSidebarHTML(res.html);
+            delete res.html;
             mapHandler.addEvents(res);
-            renderSidebarHTML(res);
         }
     });
+}
+
+function findSelectedItems(itemType, results) {
+    let filtered = null;
+
+    if (results[itemType] !== null) {
+        filtered = results[itemType].filter(item => item.state !== "nosearch");
+        if (filtered.length === 0) {
+            alert(
+                "Please select " +
+                    itemType +
+                    " or remove any input from the field and query again"
+            );
+            return -1;
+        }
+    }
+    return filtered;
+}
+
+function getDateValues() {
+    let fromInput = document.getElementById("fromDate").value;
+    let toInput = document.getElementById("toDate").value;
+
+    if (fromInput === "") {
+        let currentDate = new Date().toISOString();
+        fromInput = currentDate.substring(0, currentDate.indexOf("T"));
+    }
+    if (toInput === "") {
+        toInput =
+            parseInt(fromInput.substring(0, 4)) + 10 + fromInput.substring(4);
+    }
+
+    return [fromInput, toInput];
 }
 
 function attachCardEvents(searchResults) {
@@ -188,7 +179,15 @@ function attachCardEvents(searchResults) {
 }
 
 function toggleCardState(card, resultData) {
-    let states = ["nosearch", "search"];
+    //Set up icons, and determine if area or artist card
+    let icons = card.getElementsByTagName("i");
+    let states;
+
+    if (icons.length === 2) {
+        states = ["nosearch", "search", "discover"];
+    } else {
+        states = ["nosearch", "search"];
+    }
 
     let currentState = states.indexOf(resultData.state);
     currentState = (currentState + 1) % states.length;
@@ -198,11 +197,15 @@ function toggleCardState(card, resultData) {
         "content " + resultData.state;
 
     //Toggle icons
-    let icons = card.getElementsByTagName("i");
     if (resultData.state === "nosearch") {
         icons[0].className = "toggle off icon";
+        if (icons[1]) {
+            icons[1].className = "toggle off icon";
+        }
     } else if (resultData.state === "search") {
         icons[0].className = "toggle on icon";
+    } else if (resultData.state === "discover") {
+        icons[1].className = "toggle on icon";
     }
 }
 
@@ -210,30 +213,8 @@ function handleError(err) {
     alert(err.message);
 }
 
-function renderSidebarHTML(input) {
-    let renderString = "";
-    for (let artistGroup in input) {
-        let artistEvents = input[artistGroup].events;
-        renderString +=
-            "<h3 class='ui header'>" + artistEvents[0].grouping + "</h3>";
-        if (
-            typeof input[artistGroup].tracks !== "undefined" &&
-            input[artistGroup].tracks[0].preview_url !== null
-        ) {
-            let topTrack = input[artistGroup].tracks[0];
-            renderString +=
-                "<div>Preview: " +
-                topTrack.name +
-                "<audio controls><source src='" +
-                topTrack.preview_url +
-                "' type='audio/mpeg'</audio></div>";
-        }
-        artistEvents.forEach(event => {
-            renderString += individualMenuItem(event);
-        });
-    }
-
-    document.getElementById("sidebar").innerHTML = renderString;
+function renderSidebarHTML(sidebarHTML) {
+    document.getElementById("sidebar").innerHTML = sidebarHTML;
     attachEvents();
 }
 
@@ -251,29 +232,20 @@ function attachEvents() {
     }
 }
 
-function individualMenuItem(event) {
-    let d = event.startDate
-        .split("-")
-        .reverse()
-        .join("/");
-
-    let singleRender = `<div class='item'>
-        <div class='content'>
-            <div class='header'><span>${event.displayName}<span> </div>
-            <div class='meta'><span>${event.venue} - ${d}</span></div> 
-            <div class='meta'><span>${event.city}</span><a href="${
-        event.uri
-    }" target="_blank">More info...</a></div>          
-        </div>    
-    </div>`;
-
-    return singleRender;
-}
-
 function startButtonLoading(button) {
     button.className = "ui primary loading button";
 }
 
 function stopButtonLoading(button) {
     button.className = "ui primary button";
+}
+
+function fetchHandler(endpoint, bodyObject) {
+    return fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify(bodyObject)
+    }).then(res => res.json());
 }

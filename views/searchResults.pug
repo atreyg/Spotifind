@@ -1,0 +1,37 @@
+mixin artistCard(artist)
+  div(class="card" style="width:200px;height:300px")
+    div(class="ui image" style="height:150px;overflow:hidden")
+      img(src=artist.image style="min-height:100%")
+    div(class="content")
+      div(class="header")=artist.name
+      div(class="meta")=artist.genres
+    div(class="extra content")
+      span(class="left floated search")
+        i(class="toggle off icon")
+        span="Search"
+      span(class="right floated search")
+        i(class="toggle off icon")
+        span="Discover"
+
+mixin areaCard(area)
+  div(class="card")
+    div(class="content")
+      div(class="header")=area.city
+      div(class="meta")=area.widerArea
+    div(class="extra content")
+      span(class="left floated search")
+        i(class="toggle off icon")
+        span="Search"
+
+if artists 
+  h1(class='ui header')=artists.length + " artist(s) found that match search"
+  h3(class='ui header')="Select who to search for below. Toggle whether to search an artist by clicking on the card."
+  div(class='ui link cards')
+    each artist in artists
+      +artistCard(artist)
+if areas 
+  h1(class='ui header')=areas.length + " areas(s) found that match search"
+  h3(class='ui header')="Select where to search below. Toggle whether to search an area by clicking on the card."
+  div(class='ui link cards')
+    each area in areas
+      +areaCard(area)
