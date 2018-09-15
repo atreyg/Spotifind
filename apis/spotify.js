@@ -1,3 +1,4 @@
+//Library for creating requests with promise functionality
 const rp = require("request-promise");
 
 const spotify = {
@@ -33,11 +34,15 @@ const spotify = {
         return rp(options).then(
             res => {
                 let artists = res.artists.items.map(artist => {
+                    let imgSrc = artist.images[0]
+                        ? artist.images[0].url
+                        : "/images/default-image.jpg";
+
                     return {
                         id: artist.id,
                         name: artist.name,
                         genres: artist.genres,
-                        images: artist.images
+                        image: imgSrc
                     };
                 });
                 return artists;
@@ -82,9 +87,11 @@ const spotify = {
                         spotify.token = res;
                         return spotify.findSongs(artistId);
                     });
-                } else if(err.statusCode === 429){
-                    throw new Error('Too many results! Please make your query more specific');
-                }else {
+                } else if (err.statusCode === 429) {
+                    throw new Error(
+                        "Too many results! Please make your query more specific"
+                    );
+                } else {
                     throw err;
                 }
             }
@@ -112,6 +119,10 @@ const spotify = {
     }
 };
 
+/**
+ * Helper function to create an object for making requests to spotify API
+ * @param {string} endpoint
+ */
 function createBaseSpotify(endpoint) {
     return {
         uri: "https://api.spotify.com/v1" + endpoint,

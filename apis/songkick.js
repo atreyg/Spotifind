@@ -66,7 +66,6 @@ const songkick = {
 
         return Promise.all(promiseChain).then(() => {
             if (eventsFound.length === 0) {
-                console.log('lasjd')
                 throw new Error("No events found for the artist");
             }
             return eventsFound;
@@ -110,7 +109,6 @@ const songkick = {
 };
 
 function search(options, grouping) {
-
     return Promise.all([rp(options), Promise.resolve(grouping)]).then(res => {
         let eventsFound = res[0].resultsPage.results.event;
 
@@ -137,12 +135,12 @@ function search(options, grouping) {
                     displayName: event.displayName,
                     grouping: artistGroup,
                     startDate: event.start.date, //yyyy-mm-dd
-                    //startTime: event.start.time, //hh:mm:ss
                     city: event.location.city,
                     venue: event.venue.displayName,
                     areaId: event.venue.metroArea.id,
                     lat: event.venue.lat,
-                    lng: event.venue.lng
+                    lng: event.venue.lng,
+                    uri: event.uri
                 };
             });
 
