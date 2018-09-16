@@ -25,13 +25,13 @@ mixin areaCard(area)
 
 if artists 
   h1(class='ui header')=artists.length + " artist(s) found that match search"
-  h3(class='ui header')="Select who to search for below. Toggle whether to search an artist by clicking on the card."
+  h3(class='ui header')="Select who to search for below. Cycle through whether to exclude, search or enable discovery for an artist by clicking on the artist card. Discovery includes similar sounding artists in the live event results."
   div(class='ui link cards')
     each artist in artists
       +artistCard(artist)
 if areas 
   h1(class='ui header')=areas.length + " areas(s) found that match search"
-  h3(class='ui header')="Select where to search below. Toggle whether to search an area by clicking on the card."
+  h3(class='ui header')="Select where to search below. Toggle whether to search an area by clicking on the area card."
   div(class='ui link cards')
     each area in areas
       +areaCard(area)

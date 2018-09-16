@@ -72,6 +72,10 @@ audio {
     clear: both;
 }
 
+#sidebar li {
+    margin-bottom: 10px;
+}
+
 .content {
     overflow: hidden;
     -webkit-user-select: none; /* Chrome all / Safari all */
