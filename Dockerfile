@@ -14,4 +14,6 @@ COPY . .
 #Access port
 EXPOSE 3000
 
-CMD ["npm", "start"]
+#Run app in production environment
+ENV NODE_ENV=production
+CMD npm start

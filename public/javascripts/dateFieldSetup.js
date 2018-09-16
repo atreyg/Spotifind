@@ -18,6 +18,7 @@ function initDateFields() {
     let currentDate = new Date().toISOString();
     currentDate = currentDate.substring(0, currentDate.indexOf("T"));
     from.min = currentDate;
+    to.min = currentDate;
 
     //Add common date field functionality to both inputs
     addCommonEventListeners(from);
