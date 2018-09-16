@@ -141,7 +141,7 @@ const songkick = {
         let areasForSearch = area.map(item => item.id);
 
         //Search for the artists using searchByArtist function, and filter results by area id
-        return this.searchByArtist(artist).then(res => {
+        return this.searchByArtist(artist, from, to).then(res => {
             let areaFiltered = res.filter(event => {
                 return areasForSearch.includes(event.areaId);
             });
