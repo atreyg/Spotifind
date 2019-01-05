@@ -234,7 +234,7 @@ function createBaseOptionObj(endpoint) {
     return {
         uri: "https://api.songkick.com/api/3.0" + endpoint,
         qs: {
-            apikey: "BuGhC5QiUFzro5h3"
+            apikey: "ENTER_API_KEY_HERE"
         },
         headers: {
             "User-Agent": "Request-Promise"
