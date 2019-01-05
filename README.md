@@ -1,1 +1,1 @@
-CAB432 Mashup
+External API Mashup demonstration
