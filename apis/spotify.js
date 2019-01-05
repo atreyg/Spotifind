@@ -14,7 +14,7 @@ const spotify = {
      */
     getAuthenticationToken: function() {
         let client_id = "8bebc3251c414793aeabce4ac70ca4ca";
-        let client_secret = "e6d775aec93944c9b6d09c47e3965493";
+        let client_secret = "";
 
         //Object to make the request for access token, encodes id and secret in base64
         let options = {
